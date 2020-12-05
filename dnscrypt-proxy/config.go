@@ -163,9 +163,11 @@ type SourceConfig struct {
 }
 
 type QueryLogConfig struct {
-	File          string
-	Format        string
-	IgnoredQtypes []string `toml:"ignored_qtypes"`
+	File           string
+	Format         string
+	IgnoredQtypes  []string `toml:"ignored_qtypes"`
+	HideClientIp   bool     `toml:"hide_client_ip"`
+	HideDomainName bool     `toml:"hide_domain_name"`
 }
 
 type NxLogConfig struct {
@@ -445,6 +447,8 @@ func ConfigLoad(proxy *Proxy, flags *ConfigFlags) error {
 	proxy.queryLogFile = config.QueryLog.File
 	proxy.queryLogFormat = config.QueryLog.Format
 	proxy.queryLogIgnoredQtypes = config.QueryLog.IgnoredQtypes
+	proxy.queryLogHideClientIp = config.QueryLog.HideClientIp
+	proxy.queryLogHideDomainName = config.QueryLog.HideDomainName
 
 	if len(config.NxLog.Format) == 0 {
 		config.NxLog.Format = "tsv"

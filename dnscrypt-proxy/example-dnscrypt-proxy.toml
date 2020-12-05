@@ -421,6 +421,16 @@ cache_neg_max_ttl = 600
   # ignored_qtypes = ['DNSKEY', 'NS']
 
 
+  ## Do not log the client IP addresses.
+
+  # hide_client_ip = false
+
+
+  ## Do not log the queried domain name
+
+  # hide_domain_name = false
+
+
 
 ############################################
 #        Suspicious queries logging        #

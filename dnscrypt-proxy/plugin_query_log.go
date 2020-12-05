@@ -13,9 +13,11 @@ import (
 )
 
 type PluginQueryLog struct {
-	logger        *lumberjack.Logger
-	format        string
-	ignoredQtypes []string
+	logger         *lumberjack.Logger
+	format         string
+	ignoredQtypes  []string
+	hideClientIp   bool
+	hideDomainName bool
 }
 
 func (plugin *PluginQueryLog) Name() string {
@@ -30,6 +32,8 @@ func (plugin *PluginQueryLog) Init(proxy *Proxy) error {
 	plugin.logger = &lumberjack.Logger{LocalTime: true, MaxSize: proxy.logMaxSize, MaxAge: proxy.logMaxAge, MaxBackups: proxy.logMaxBackups, Filename: proxy.queryLogFile, Compress: true}
 	plugin.format = proxy.queryLogFormat
 	plugin.ignoredQtypes = proxy.queryLogIgnoredQtypes
+	plugin.hideClientIp = proxy.queryLogHideClientIp
+	plugin.hideDomainName = proxy.queryLogHideDomainName
 
 	return nil
 }
@@ -56,12 +60,21 @@ func (plugin *PluginQueryLog) Eval(pluginsState *PluginsState, msg *dns.Msg) err
 		}
 	}
 	var clientIPStr string
-	if pluginsState.clientProto == "udp" {
-		clientIPStr = (*pluginsState.clientAddr).(*net.UDPAddr).IP.String()
+	if plugin.hideClientIp {
+		clientIPStr = "***"
 	} else {
-		clientIPStr = (*pluginsState.clientAddr).(*net.TCPAddr).IP.String()
+		if pluginsState.clientProto == "udp" {
+			clientIPStr = (*pluginsState.clientAddr).(*net.UDPAddr).IP.String()
+		} else {
+			clientIPStr = (*pluginsState.clientAddr).(*net.TCPAddr).IP.String()
+		}
 	}
-	qName := pluginsState.qName
+	var qName string
+	if plugin.hideDomainName {
+		qName = "***"
+	} else {
+		qName = pluginsState.qName
+	}
 
 	if pluginsState.cacheHit {
 		pluginsState.serverName = "-"

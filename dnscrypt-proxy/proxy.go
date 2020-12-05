@@ -85,6 +85,8 @@ type Proxy struct {
 	skipAnonIncompatbibleResolvers bool
 	dns64Prefixes                  []string
 	dns64Resolvers                 []string
+	queryLogHideClientIp           bool
+	queryLogHideDomainName         bool
 }
 
 func (proxy *Proxy) registerUdpListener(conn *net.UDPConn) {
