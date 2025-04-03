@@ -180,14 +180,18 @@ type SourceConfig struct {
 }
 
 type QueryLogConfig struct {
-	File          string
-	Format        string
-	IgnoredQtypes []string `toml:"ignored_qtypes"`
+	File           string
+	Format         string
+	IgnoredQtypes  []string	`toml:"ignored_qtypes"`
+	HideClientIP   bool	`toml:"hide_client_ip"`
+	HideDomainName bool	`toml:"hide_domain_name"`
 }
 
 type NxLogConfig struct {
-	File   string
-	Format string
+	File           string
+	Format         string
+	HideClientIP   bool	`toml:"hide_client_ip"`
+	HideDomainName bool	`toml:"hide_domain_name"`
 }
 
 type BlockNameConfig struct {
@@ -528,6 +532,8 @@ func ConfigLoad(proxy *Proxy, flags *ConfigFlags) error {
 	proxy.queryLogFile = config.QueryLog.File
 	proxy.queryLogFormat = config.QueryLog.Format
 	proxy.queryLogIgnoredQtypes = config.QueryLog.IgnoredQtypes
+	proxy.queryLogHideClientIP = config.QueryLog.HideClientIP
+	proxy.queryLogHideDomainName = config.QueryLog.HideDomainName
 
 	if len(config.NxLog.Format) == 0 {
 		config.NxLog.Format = "tsv"
@@ -539,6 +545,8 @@ func ConfigLoad(proxy *Proxy, flags *ConfigFlags) error {
 	}
 	proxy.nxLogFile = config.NxLog.File
 	proxy.nxLogFormat = config.NxLog.Format
+	proxy.nxLogHideClientIP = config.NxLog.HideClientIP
+	proxy.nxLogHideDomainName = config.NxLog.HideDomainName
 
 	if len(config.BlockName.File) > 0 && len(config.BlockNameLegacy.File) > 0 {
 		return errors.New("Don't specify both [blocked_names] and [blacklist] sections - Update your config file")

@@ -103,6 +103,10 @@ type Proxy struct {
 	SourceDNSCrypt                bool
 	SourceDoH                     bool
 	SourceODoH                    bool
+	queryLogHideClientIP          bool
+	queryLogHideDomainName        bool
+	nxLogHideClientIP             bool
+	nxLogHideDomainName           bool
 }
 
 func (proxy *Proxy) registerUDPListener(conn *net.UDPConn) {

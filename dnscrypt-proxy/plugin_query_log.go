@@ -13,9 +13,11 @@ import (
 )
 
 type PluginQueryLog struct {
-	logger        io.Writer
-	format        string
-	ignoredQtypes []string
+	logger         io.Writer
+	format         string
+	ignoredQtypes  []string
+	hideClientIP   bool
+	hideDomainName bool
 }
 
 func (plugin *PluginQueryLog) Name() string {
@@ -30,6 +32,8 @@ func (plugin *PluginQueryLog) Init(proxy *Proxy) error {
 	plugin.logger = Logger(proxy.logMaxSize, proxy.logMaxAge, proxy.logMaxBackups, proxy.queryLogFile)
 	plugin.format = proxy.queryLogFormat
 	plugin.ignoredQtypes = proxy.queryLogIgnoredQtypes
+	plugin.hideClientIP = proxy.queryLogHideClientIP
+	plugin.hideDomainName = proxy.queryLogHideDomainName
 
 	return nil
 }
@@ -44,14 +48,18 @@ func (plugin *PluginQueryLog) Reload() error {
 
 func (plugin *PluginQueryLog) Eval(pluginsState *PluginsState, msg *dns.Msg) error {
 	var clientIPStr string
-	switch pluginsState.clientProto {
-	case "udp":
-		clientIPStr = (*pluginsState.clientAddr).(*net.UDPAddr).IP.String()
-	case "tcp", "local_doh":
-		clientIPStr = (*pluginsState.clientAddr).(*net.TCPAddr).IP.String()
-	default:
-		// Ignore internal flow.
-		return nil
+	if plugin.hideClientIP {
+		clientIPStr = "-"
+	} else {
+		switch pluginsState.clientProto {
+		case "udp":
+			clientIPStr = (*pluginsState.clientAddr).(*net.UDPAddr).IP.String()
+		case "tcp", "local_doh":
+			clientIPStr = (*pluginsState.clientAddr).(*net.TCPAddr).IP.String()
+		default:
+			// Ignore internal flow.
+			return nil
+		}
 	}
 	question := msg.Question[0]
 	qType, ok := dns.TypeToString[question.Qtype]
@@ -65,7 +73,12 @@ func (plugin *PluginQueryLog) Eval(pluginsState *PluginsState, msg *dns.Msg) err
 			}
 		}
 	}
-	qName := pluginsState.qName
+	var qName string
+	if plugin.hideDomainName {
+		qName = "***"
+	} else {
+		qName = pluginsState.qName
+	}
 
 	if pluginsState.cacheHit {
 		pluginsState.serverName = "-"
@@ -84,6 +97,7 @@ func (plugin *PluginQueryLog) Eval(pluginsState *PluginsState, msg *dns.Msg) err
 	if !pluginsState.requestStart.IsZero() && !pluginsState.requestEnd.IsZero() {
 		requestDuration = pluginsState.requestEnd.Sub(pluginsState.requestStart)
 	}
+
 	var line string
 	if plugin.format == "tsv" {
 		now := time.Now()

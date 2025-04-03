@@ -12,8 +12,10 @@ import (
 )
 
 type PluginNxLog struct {
-	logger io.Writer
-	format string
+	logger         io.Writer
+	format         string
+	hideClientIP   bool
+	hideDomainName bool
 }
 
 func (plugin *PluginNxLog) Name() string {
@@ -27,6 +29,8 @@ func (plugin *PluginNxLog) Description() string {
 func (plugin *PluginNxLog) Init(proxy *Proxy) error {
 	plugin.logger = Logger(proxy.logMaxSize, proxy.logMaxAge, proxy.logMaxBackups, proxy.nxLogFile)
 	plugin.format = proxy.nxLogFormat
+	plugin.hideClientIP = proxy.nxLogHideClientIP
+	plugin.hideDomainName = proxy.nxLogHideDomainName
 
 	return nil
 }
@@ -44,21 +48,30 @@ func (plugin *PluginNxLog) Eval(pluginsState *PluginsState, msg *dns.Msg) error 
 		return nil
 	}
 	var clientIPStr string
-	switch pluginsState.clientProto {
-	case "udp":
-		clientIPStr = (*pluginsState.clientAddr).(*net.UDPAddr).IP.String()
-	case "tcp", "local_doh":
-		clientIPStr = (*pluginsState.clientAddr).(*net.TCPAddr).IP.String()
-	default:
-		// Ignore internal flow.
-		return nil
+	if plugin.hideClientIP {
+		clientIPStr = "-"
+	} else {
+		switch pluginsState.clientProto {
+		case "udp":
+			clientIPStr = (*pluginsState.clientAddr).(*net.UDPAddr).IP.String()
+		case "tcp", "local_doh":
+			clientIPStr = (*pluginsState.clientAddr).(*net.TCPAddr).IP.String()
+		default:
+			// Ignore internal flow.
+			return nil
+		}
 	}
 	question := msg.Question[0]
 	qType, ok := dns.TypeToString[question.Qtype]
 	if !ok {
 		qType = string(qType)
 	}
-	qName := pluginsState.qName
+	var qName string
+	if plugin.hideDomainName {
+		qName = "***"
+	} else {
+		qName = pluginsState.qName
+	}
 
 	var line string
 	if plugin.format == "tsv" {

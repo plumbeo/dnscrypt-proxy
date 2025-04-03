@@ -511,6 +511,16 @@ format = 'tsv'
 # ignored_qtypes = ['DNSKEY', 'NS']
 
 
+## Do not log the clients' IP addresses.
+
+# hide_client_ip = false
+
+
+## Do not log the queried domain names.
+
+# hide_domain_name = false
+
+
 
 ############################################
 #        Suspicious queries logging        #
@@ -530,6 +540,16 @@ format = 'tsv'
 ## Query log format (currently supported: tsv and ltsv)
 
 format = 'tsv'
+
+
+## Do not log the clients' IP addresses.
+
+# hide_client_ip = false
+
+
+## Do not log the queried domain names.
+
+# hide_domain_name = false
 
 
 
